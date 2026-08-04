@@ -9,3 +9,5 @@ dev/
 *.tif
 *.csv
 .Rhistory
+*.rds
+cystimap_export_test/
