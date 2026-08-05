@@ -11,3 +11,6 @@ dev/
 .Rhistory
 *.rds
 cystimap_export_test/
+inst/doc
+/doc/
+/Meta/

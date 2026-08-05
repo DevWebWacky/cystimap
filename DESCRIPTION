@@ -18,7 +18,9 @@ Suggests:
     cowplot,
     ggspatial,
     haven,
+    knitr,
     readxl,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)
@@ -31,3 +33,4 @@ Imports:
     ggplot2,
     gstat,
     tidyterra
+VignetteBuilder: knitr

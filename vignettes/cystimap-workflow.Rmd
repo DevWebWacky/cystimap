@@ -1,0 +1,228 @@
+---
+title: "The cystimap Workflow: A Complete Worked Example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The cystimap Workflow: A Complete Worked Example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE, comment = "#>", fig.width = 7, fig.height = 5
+)
+```
+
+```{r setup}
+library(cystimap)
+library(sf)
+```
+
+## Introduction
+
+This vignette walks through the complete cystimap workflow using the
+built-in North Carolina counties dataset (from the `sf` package) as a
+stand-in study area, with a simulated point dataset representing case
+counts. The same steps apply directly to a real epidemiological,
+environmental, or ecological dataset.
+
+## 1. Prepare the study area
+
+Every cystimap workflow begins by defining the analytical environment:
+coordinate reference system, boundary, and raster template. cystimap
+never guesses a CRS — a projected CRS with linear units must be
+supplied explicitly when a resolution is given.
+
+```{r}
+nc <- st_read(system.file("shape/nc.shp", package = "sf"), quiet = TRUE)
+
+result <- prepare_study_area(
+  boundary   = nc,
+  crs        = 32119,      # NAD83 / North Carolina, metres
+  resolution = 5000,       # 5km grid cells
+  dissolve   = TRUE
+)
+
+print(result)
+```
+
+## 2. Read and prepare observation data
+
+```{r}
+set.seed(1)
+n <- 40
+dummy <- data.frame(
+  id    = 1:n,
+  lon   = runif(n, -80, -76),
+  lat   = runif(n, 34, 36.5),
+  cases = rpois(n, 10)
+)
+tmp_file <- tempfile(fileext = ".csv")
+write.csv(dummy, tmp_file, row.names = FALSE)
+
+result <- read_data(result, file = tmp_file, name = "cases")
+```
+
+## 3. Create an indicator, attach locations, and aggregate
+
+`create_indicator()` combines what would otherwise be three separate
+steps. The indicator formula is written naturally, without quoting.
+
+```{r}
+result <- create_indicator(
+  result,
+  data_name      = "cases",
+  indicator_name = "case_rate",
+  formula        = cases * 5,
+  type           = "rate",
+  coords         = c("lon", "lat"),
+  coords_crs     = 4326
+)
+
+result$data$indicators$case_rate
+```
+
+## 4. Create a smooth spatial surface
+
+cystimap supports Ordinary Kriging, IDW, Nearest Neighbour, and
+existing-raster validation, all behind one consistent interface.
+
+```{r}
+result <- smooth_surface(
+  result,
+  indicator_name = "case_rate",
+  surface_name   = "risk_surface",
+  method         = "ordinary_kriging",
+  mode           = "automatic",
+  cv_method      = "loo"
+)
+
+result$surfaces$risk_surface$prediction
+result$surfaces$risk_surface$cv_summary
+```
+
+Note the cross-validation summary above: because this example uses
+randomly simulated data with no real spatial structure, correlation
+is expected to be low. In a real analysis, this diagnostic should be
+checked before interpreting the surface.
+
+## 5. Classify the surface
+
+```{r}
+result <- classify_surface(
+  result,
+  surface_name    = "risk_surface",
+  classified_name = "risk_binary",
+  type            = "binary",
+  cutoff_method   = "quantile",
+  cutoffs         = 0.5
+)
+
+result$classified$risk_binary$frequencies
+```
+
+## 6. Combine classified surfaces
+
+Combining requires two or more classified layers. Here we create a
+second classification at a different threshold to demonstrate binary
+overlap.
+
+```{r}
+result <- classify_surface(
+  result,
+  surface_name    = "risk_surface",
+  classified_name = "risk_binary_q25",
+  type            = "binary",
+  cutoff_method   = "quantile",
+  cutoffs         = 0.25
+)
+
+result <- combine_surfaces(
+  result,
+  classified_names = c("risk_binary", "risk_binary_q25"),
+  combined_name    = "overlap",
+  method           = "binary_overlap"
+)
+
+result$results$combined$overlap$frequencies
+```
+
+## 7. Scenarios: sensitivity, agreement, and consensus
+
+The scenario framework generates every combination across
+user-defined variable groups, executes each one, and evaluates how
+much results change under different analytical assumptions.
+
+```{r}
+result <- define_scenarios(
+  result,
+  variable_groups = list(
+    threshold_choice = c("risk_binary", "risk_binary_q25")
+  ),
+  combine_method = "binary_overlap"
+)
+
+result <- run_scenarios(result)
+result <- scenario_sensitivity(result, outcome_value = 1, comparison = "pairwise")
+result <- scenario_agreement(result)
+result <- scenario_consensus(result, outcome_value = 1, min_scenarios = 1)
+
+result$results$sensitivity
+result$results$agreement
+```
+
+## 8. Administrative summaries
+
+Any raster output can be summarised within polygons — here, North
+Carolina counties.
+
+```{r}
+result <- admin_summary(
+  result,
+  raster_source = "surfaces", raster_name = "risk_surface",
+  polygons = nc, zone_id = "NAME",
+  stats = c("mean", "min", "max")
+)
+
+head(result$results$admin_summary$surfaces__risk_surface$summary_table)
+```
+
+## 9. Mapping
+
+```{r}
+map_surface(
+  result,
+  raster_source = "surfaces", raster_name = "risk_surface",
+  title = "Simulated Case Rate Surface", legend_title = "Case Rate"
+)
+```
+
+## 10. Export results
+
+```{r, eval = FALSE}
+export_results(result, output_dir = "my_analysis_output")
+```
+
+This writes all rasters, tables, the processing log, and a
+reproducibility manifest to a tidy folder structure.
+
+## Reproducibility
+
+Every step above is recorded in `result$log`, giving a complete,
+inspectable processing history:
+
+```{r}
+length(result$log)
+result$log[[1]]$step
+```
+
+## Saving and restoring a cystimap object
+
+Because `terra::SpatRaster` objects hold pointers to external memory,
+ordinary `save()`/`saveRDS()` will not restore them safely across R
+sessions. Use `save_cystimap()` / `load_cystimap()` instead:
+
+```{r, eval = FALSE}
+save_cystimap(result, "my_analysis.rds")
+result <- load_cystimap("my_analysis.rds")
+```
