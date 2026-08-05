@@ -28,9 +28,10 @@ validation and provenance logic each time. cystimap instead offers:
 - **One continuous object** that carries the study area, data, surfaces,
   classifications, and scenario results through the entire pipeline, so
   every stage can build on the last with a single consistent interface.
-- **Automatic / Manual control modes** for spatial interpolation, so
-  users can let the package select and validate models, or take full
-  manual control.
+- **Automatic and Manual control modes** for spatial interpolation
+  (Ordinary Kriging), so users can let the package select and validate
+  variogram models, or supply their own. Guided mode is planned for a
+  future release.
 - **A built-in scenario framework**, generate alternative analytical
   scenarios, measure their agreement (Kappa, Jaccard, exact agreement),
   evaluate sensitivity to analytical choices, and identify consensus
