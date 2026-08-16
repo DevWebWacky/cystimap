@@ -7,7 +7,7 @@
 
 **cystimap** is an R package for reproducible spatial risk mapping. It
 provides a complete, disease-independent and discipline-independent
-workflow — from raw point observations to publication-ready maps,
+workflow, from raw point observations to publication-ready maps,
 covering study area preparation, spatial interpolation, risk
 classification, scenario and sensitivity analysis, consensus mapping,
 administrative summaries, and reproducible export.
@@ -56,28 +56,28 @@ devtools::install_github("devwebwacky/cystimap")
 
 cystimap follows a linear but independently-usable workflow:
 
-1.  **`prepare_study_area()`** — define the analytical boundary, CRS,
+1.  **`prepare_study_area()`** : define the analytical boundary, CRS,
     raster template, mask, and prediction grid
-2.  **`read_data()`** — read spatial or non-spatial data from common
+2.  **`read_data()`** : read spatial or non-spatial data from common
     formats
-3.  **`create_indicator()`** — create an indicator, attach spatial
+3.  **`create_indicator()`** : create an indicator, attach spatial
     locations, and aggregate to one value per location
-4.  **`smooth_surface()`** — interpolate point observations into a
+4.  **`smooth_surface()`** : interpolate point observations into a
     continuous raster surface (Ordinary Kriging, IDW, Nearest Neighbour,
     or validate an existing raster)
-5.  **`classify_surface()`** — convert a continuous surface into binary,
+5.  **`classify_surface()`** : convert a continuous surface into binary,
     multiclass, or sensitivity-analysis classes
-6.  **`combine_surfaces()`** — combine classified surfaces into a single
+6.  **`combine_surfaces()`** : combine classified surfaces into a single
     analytical layer (overlap, weighted, additive, logical rules)
-7.  **`define_scenarios()` → `run_scenarios()` →
-    `scenario_sensitivity()` → `scenario_agreement()` →
-    `scenario_consensus()`** — build alternative analytical scenarios,
+7.  **`define_scenarios()` > `run_scenarios()` >
+    `scenario_sensitivity()` → `scenario_agreement()` >
+    `scenario_consensus()`** : build alternative analytical scenarios,
     execute them, and evaluate their sensitivity, agreement, and
     consensus
-8.  **`admin_summary()`** — summarise any raster output within
+8.  **`admin_summary()`** : summarise any raster output within
     administrative or other polygons
-9.  **`map_surface()`** — produce a publication-quality map
-10. **`export_results()`** — export all rasters, tables, logs, and a
+9.  **`map_surface()`** : produce a publication-quality map
+10. **`export_results()`** : export all rasters, tables, logs, and a
     reproducibility manifest
 
 See `vignette("cystimap-workflow")` for a complete worked example.
