@@ -78,7 +78,7 @@ fine, note it in your report and skip to the next function.
 ## 4. Function 1: `prepare_study_area()`
 
 **What it does:** Sets up the geographic foundation for everything
-else — the boundary, coordinate reference system (CRS), and raster
+else, the boundary, coordinate reference system (CRS), and raster
 grid that every later step will align to.
 
 **Important:** cystimap will never guess your CRS. If it cannot
@@ -91,7 +91,7 @@ my_boundary <- st_read("path/to/your_boundary.shp")
 result <- prepare_study_area(
   boundary   = my_boundary,
   crs        = 32630,      # replace with YOUR projected CRS EPSG code (in metres)
-  resolution = 1000,       # grid cell size in metres - adjust to your area size
+  resolution = 1000,       # grid cell size in metres, adjust to your area size
   dissolve   = TRUE
 )
 
@@ -100,10 +100,10 @@ print(result)
 
 **Try doing these:**
 - Run it with your real boundary and a sensible resolution
-- Try leaving out `crs` if your boundary file already has one — does
+- Try leaving out `crs` if your boundary file already has one does
   it get picked up correctly?
 - Try supplying a geographic CRS (like 4326, standard lon/lat)
-  together with a `resolution` — this **should fail** with a clear
+  together with a `resolution` this **should fail** with a clear
   error message. If it does not fail, that is a bug, please report it.
 - If you have a lake, protected area, or similar zone to exclude, try:
 ```r
@@ -183,7 +183,7 @@ with your indicator column and correct coordinates.
 
 **What it does:** Turns your point observations into a continuous
 raster surface (a map showing predicted values everywhere, not just
-at your sample points), using kriging, IDW, or nearest-neighbour
+at your sample points), using kriging, IDW, or nearest neighbour
 interpolation.
 
 ```r
@@ -263,7 +263,7 @@ per class summing to 100%.
 
 ## 9. Function 8: `combine_surfaces()`
 
-**What it does:** Merges two or more classified layers into one —
+**What it does:** Merges two or more classified layers into one
 e.g. finding where several risk factors overlap.
 
 ```r
@@ -295,7 +295,7 @@ rule, with a sensible frequency table.
 different analytical choices, by building and comparing multiple
 "what-if" versions of your analysis.
 
-This is the most involved function — take your time here.
+This is the most involved function take your time here.
 
 ```r
 # Group your classified surfaces by what they represent
@@ -332,7 +332,7 @@ Kappa/Jaccard between -1 and 1 or 0 and 1 respectively).
 ## 11. Function 13: `admin_summary()`
 
 **What it does:** Summarises any raster result (mean, area, dominant
-class, etc.) within polygons — e.g. districts.
+class, etc.) within polygons
 
 ```r
 my_districts <- st_read("path/to/districts.shp")
